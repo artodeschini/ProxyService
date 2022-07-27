@@ -1,7 +1,22 @@
-# ProxyWso2EsbCepCorreios
-Proxy para busca de endereços no Web Service dos correios
-Este projeto de um class mediator para WSO2 ESB AI
+# Proxy Service
 
-O mesmo é utilizado no proxy em anexo ConsultaCepProxy.xml
+## Requires
 
-Este proxy é utilizado para integrar o sistema SGT aos correios.
+* Java 11
+* Maven 3.6 >
+* jsoup
+* quarkus
+
+## Notas da versao 2.0
+
+* Aplicaçao migrada para utilizar microsrviço com quarkus 
+
+## Proxys (Endpoints) 
+
+[correios](https://localhost:8080/proxy/01311-000)
+
+[IBGE](https://localhost:8080/proxy/SC/Florianópolis)
+
+## notas a versao 1.0.0
+* utilizava wso2 esb para fazer o proxy
+* Este era um projeto de um class mediator para WSO2 ESB

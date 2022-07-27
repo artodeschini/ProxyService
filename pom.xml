@@ -1,139 +1,199 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>br.org.cni.sgt.MediatorCEP</groupId>
-  <artifactId>MediatorCEP</artifactId>
-  <version>1.0.0</version>
-  <packaging>bundle</packaging>
-  <name>MediatorCEP</name>
-  <description>MediatorCEP</description>
+  <groupId>org.todeschini</groupId>
+  <artifactId>ProxyCep</artifactId>
+  <version>2.0.0</version>
+  <description>Realizar um Proxy de Cep dos correios</description>
   <properties>
-    <CApp.type>lib/synapse/mediator</CApp.type>
+    <compiler-plugin.version>3.8.1</compiler-plugin.version>
+    <maven.compiler.parameters>true</maven.compiler.parameters>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.version>2.5.1.Final</quarkus.platform.version>
+    <quarkus-plugin.version>2.5.1.Final</quarkus-plugin.version>
+    <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+    <jacoco.version>0.8.7</jacoco.version>
   </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
+    <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
     <dependency>
-      <groupId>org.apache.synapse</groupId>
-      <artifactId>synapse-core</artifactId>
-      <version>2.1.2-wso2v2</version>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>1.15.2</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.24</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>commons-httpclient.wso2</groupId>
-      <artifactId>commons-httpclient</artifactId>
-      <version>3.1.0.wso2v2</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy-jackson</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-codec.wso2</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.4.0.wso2v1</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.woden.wso2</groupId>
-      <artifactId>woden</artifactId>
-      <version>1.0.0.M8-wso2v1</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
     </dependency>
     <dependency>
-      <groupId>wsdl4j.wso2</groupId>
-      <artifactId>wsdl4j</artifactId>
-      <version>1.6.2.wso2v4</version>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.ws.commons.schema.wso2</groupId>
-      <artifactId>XmlSchema</artifactId>
-      <version>1.4.7.wso2v2</version>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.abdera.wso2</groupId>
-      <artifactId>abdera</artifactId>
-      <version>1.0.0.wso2v3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.geronimo.specs.wso2</groupId>
-      <artifactId>geronimo-stax-api_1.0_spec</artifactId>
-      <version>1.0.1.wso2v2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents.wso2</groupId>
-      <artifactId>httpcore</artifactId>
-      <version>4.3.0.wso2v1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.neethi.wso2</groupId>
-      <artifactId>neethi</artifactId>
-      <version>2.0.4.wso2v4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.ws.commons.axiom.wso2</groupId>
-      <artifactId>axiom</artifactId>
-      <version>1.2.11.wso2v4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.axis2.wso2</groupId>
-      <artifactId>axis2</artifactId>
-      <version>1.6.1.wso2v10</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-io.wso2</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.0.0.wso2v2</version>
+      <groupId>org.jacoco</groupId>
+      <artifactId>org.jacoco.agent</artifactId>
+      <version>${jacoco.version}</version>
+      <classifier>runtime</classifier>
+      <scope>test</scope>
     </dependency>
   </dependencies>
-  <repositories>
-    <repository>
-      <releases>
-        <enabled>true</enabled>
-        <updatePolicy>daily</updatePolicy>
-        <checksumPolicy>ignore</checksumPolicy>
-      </releases>
-      <id>wso2-nexus</id>
-      <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <releases>
-        <enabled>true</enabled>
-        <updatePolicy>daily</updatePolicy>
-        <checksumPolicy>ignore</checksumPolicy>
-      </releases>
-      <id>wso2-nexus</id>
-      <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
-    </pluginRepository>
-  </pluginRepositories>
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.3.4</version>
-        <extensions>true</extensions>
-        <configuration>
-          <instructions>
-            <Bundle-SymbolicName>MediatorCEP</Bundle-SymbolicName>
-            <Bundle-Name>MediatorCEP</Bundle-Name>
-            <Export-Package>br.org.cni.sgt</Export-Package>
-            <DynamicImport-Package>*</DynamicImport-Package>
-          </instructions>
-        </configuration>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus-plugin.version}</version>
+<!--        <configuration>-->
+<!--          <addDefaultImplementationEntries>true</addDefaultImplementationEntries>-->
+<!--        </configuration>-->
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.9</version>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler-plugin.version}</version>
         <configuration>
-          <buildcommands>
-            <buildcommand>org.eclipse.jdt.core.javabuilder</buildcommand>
-          </buildcommands>
-          <projectnatures>
-            <projectnature>org.wso2.developerstudio.eclipse.artifact.mediator.project.nature</projectnature>
-            <projectnature>org.eclipse.jdt.core.javanature</projectnature>
-          </projectnatures>
+          <useIncrementalCompilation>false</useIncrementalCompilation>
+          <source>11</source>
+          <target>11</target>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
+        <configuration>
+          <printSummary>true</printSummary>
+          <!-- no parallelos execute nos teste unitatios -->
+          <threadCount>1</threadCount>
+          <useUnlimitedThreads>false</useUnlimitedThreads>
+          <perCoreThreadCount>false</perCoreThreadCount>
+          <threadCountSuites>1</threadCountSuites>
+          <threadCountClasses>1</threadCountClasses>
+          <threadCountMethods>1</threadCountMethods>
+        </configuration>
+        <executions>
+          <execution>
+            <id>tests</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>default-prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-report</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco
+              </outputDirectory>
+              <excludes>
+                <exclude>**/*Fake.*</exclude>
+                <exclude>**/Fake*.*</exclude>
+                <exclude>**/*Test.*</exclude>
+                <exclude>**/Test*.*</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>native</id>
+      <activation>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>${surefire-plugin.version}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <!-- <skipTests>${skipTests}</skipTests> -->
+                  <systemProperties>
+                    <native.image.path>${project.build.directory}/${project.build.finalName}-runner
+                    </native.image.path>
+                    <java.util.logging.manager>org.jboss.logmanager.LogManager
+                    </java.util.logging.manager>
+                  </systemProperties>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <properties>
+        <quarkus.package.type>native</quarkus.package.type>
+      </properties>
+    </profile>
+  </profiles>
 </project>

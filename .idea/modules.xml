@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/MediatorCEP.iml" filepath="$PROJECT_DIR$/MediatorCEP.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ProxyCep.iml" filepath="$PROJECT_DIR$/ProxyCep.iml" />
+    </modules>
+  </component>
+</project>
