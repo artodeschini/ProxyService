@@ -66,6 +66,12 @@ public class IbgeCrawler {
         return System.getProperty("user.home").concat("/").concat(MessageFormat.format(FILE_NAME_HTML_SAVE, LocalDate.now()));
     }
 
+    private void limparCache() {
+        ESTATOS.values().forEach(e -> e.getMuniciopios().clear());
+        ESTATOS = new HashMap<>();
+        System.gc();
+    }
+
     public File getArquivoIbge() {
         String path = this.getFileName();
         var f = new File(path);
@@ -75,6 +81,10 @@ public class IbgeCrawler {
 
         } else {
             this.createArquivoIbge();
+
+            // limprar o cache do dia
+            this.limparCache(); // cidades
+
             return new File(path);
         }
     }
@@ -104,40 +114,53 @@ public class IbgeCrawler {
 
         var descricoes = estados.select("tr");
 
-        EstadoIbge estado;
+        EstadoIbge estado = ESTATOS.get(uf);
 
         Elements tds = null;
-        ESTATOS.clear();
+        //ESTATOS.clear();
 
-        for (int i = 1; i < descricoes.size(); i++) {
-            estado = new EstadoIbge();
-            estado.setIndex(i);
+        if (estado == null) {
+            LOGGER.info("Extraindo os estados pelo CRAWLER");
+            for (int i = 1; i < descricoes.size(); i++) {
+                estado = new EstadoIbge();
+                estado.setIndex(i);
 
-            tds = descricoes.get(i).children();
+                tds = descricoes.get(i).children();
 
-            // nome do estado
-            //System.out.println(tds);
-            //System.out.println(tds.get(0).child(0).text());
-            estado.setNome(tds.get(0).child(0).text());
+                // nome do estado
+                //System.out.println(tds);
+                //System.out.println(tds.get(0).child(0).text());
+                estado.setNome(tds.get(0).child(0).text());
 
-            // sigla do estado
-            //System.out.println(tds.get(0).child(0).attr("href").replace("#", ""));
-            estado.setSigla(tds.get(0).child(0).attr("href").replace("#", ""));
+                // sigla do estado
+                //System.out.println(tds.get(0).child(0).attr("href").replace("#", ""));
+                estado.setSigla(tds.get(0).child(0).attr("href").replace("#", ""));
 
-            // codigo
-            //System.out.println("mostra o codigo");
-            //System.out.println(tds.get(1).child(0).text().replaceAll("[^\\d.]", ""));
-            estado.setCodigo(Integer.parseInt(tds.get(1).child(0).text().replaceAll("[^\\d.]", "")));
+                // codigo
+                //System.out.println("mostra o codigo");
+                //System.out.println(tds.get(1).child(0).text().replaceAll("[^\\d.]", ""));
+                estado.setCodigo(Integer.parseInt(tds.get(1).child(0).text().replaceAll("[^\\d.]", "")));
 //            System.out.println(estado);
-            ESTATOS.put(estado.getSigla(), estado);
+                ESTATOS.put(estado.getSigla(), estado);
+            }
+
+            LOGGER.info("FIM DO CRAWLER DE ESTADOS");
         }
 
+
         estado = ESTATOS.get(uf);
+
+        if (estado == null) {
+            throw new IbgeCrawlerException("Erro ao obter estados pelo CRAWLER");
+        }
+
         tds = null;
 
         MuniciopioIbge muncipio = null;
 
         if (estado != null) {
+            LOGGER.info( MessageFormat.format("INICIANDO A EXTRACAO DAS CIDADES DO ESTADO {0}", uf));
+
             if (estado.getMuniciopios().size() == 0) {
                 var municipios = tables.get(estado.getIndex()).select("tr");
                 //System.out.println(cidades);
@@ -166,15 +189,17 @@ public class IbgeCrawler {
 
                     estado.getMuniciopios().add(muncipio);
                 }
+                LOGGER.info( MessageFormat.format("FINALIZADO A EXTRACAO DAS CIDADES DO ESTADO {0} com {1} cidades.", uf, estado.getMuniciopios().size()));
             }
 
-            System.out.println("eu passei aqui procurando por " + municipio);
+//            System.out.println("eu passei aqui procurando por " + municipio);
             String busca = StringUtils.normalize(municipio);
 
+            LOGGER.info("Realizando a busca em memoria agora do municipio");
             find = estado.getMuniciopios().stream().filter(m -> m.getNormalize().equals(busca)).findFirst();
 
         } else {
-            throw new RuntimeException("sigla invlida");
+            throw new IbgeCrawlerException("sigla do estado inválida");
         }
 
         return find;

@@ -9,7 +9,8 @@
 
 ## Notas da versao 2.0
 
-* Aplicaçao migrada para utilizar microsrviço com quarkus 
+* Aplicaçao migrada para utilizar microsrviço com quarkus
+* Adicionado crawler do IBGE para encontrar o código da cidade 
 
 ## Proxys (Endpoints) 
 
@@ -17,6 +18,6 @@
 
 [IBGE](https://localhost:8080/proxy/SC/Florianópolis)
 
-## notas a versao 1.0.0
+## notas da versao 1.0.0
 * utilizava wso2 esb para fazer o proxy
 * Este era um projeto de um class mediator para WSO2 ESB

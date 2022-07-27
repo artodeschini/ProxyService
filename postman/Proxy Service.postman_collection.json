@@ -1,0 +1,49 @@
+{
+	"info": {
+		"_postman_id": "746000dc-fd84-44d4-847d-a05c6158185a",
+		"name": "Proxy Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2654737"
+	},
+	"item": [
+		{
+			"name": "Busca Por CEP",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/04548-005",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"04548-005"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Busca Codigo IBGE",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/SC/Florianópolis",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"SC",
+						"Florianópolis"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
