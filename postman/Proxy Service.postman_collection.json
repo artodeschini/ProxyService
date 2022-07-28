@@ -12,13 +12,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/proxy/04548-005",
+					"raw": "localhost:8080/proxy/correios/04548-005",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
 						"proxy",
+						"correios",
 						"04548-005"
 					]
 				}
@@ -31,15 +32,159 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/proxy/SC/Florianópolis",
+					"raw": "localhost:8080/proxy/ibge/RS/Porto%20Alegre",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
 						"proxy",
-						"SC",
-						"Florianópolis"
+						"ibge",
+						"RS",
+						"Porto%20Alegre"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Busca Cidades por Estado",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/ibge/SC",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"ibge",
+						"SC"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Feriados Bancarios Nacionais Por ano",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/feriados/2022",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"feriados",
+						"2022"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar por CNPJ",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/receita/83873877000114",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"receita",
+						"83873877000114"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Estado por DDD",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/regiao/uf/ddd/48",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"regiao",
+						"uf",
+						"ddd",
+						"48"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Estados por Regiao",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/regiao/SUL",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"regiao",
+						"SUL"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Codigos DDD por UF",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/regiao/uf/SC",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"regiao",
+						"uf",
+						"SC"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listar Todos os Estados",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/regiao/estados",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"regiao",
+						"estados"
 					]
 				}
 			},
