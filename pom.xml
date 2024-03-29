@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.todeschini</groupId>
   <artifactId>proxy-util</artifactId>
-  <version>2.0.0</version>
+  <version>2.0.1</version>
   <description>Realizar um Proxy de Cep dos correios</description>
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>

@@ -34,7 +34,7 @@ public class ProxyResource {
     @GET
     @Path("correios/{cep}")
     public Response find(@PathParam("cep") String cep) {
-        return Response.ok(correios.call(cep)).build();
+        return Response.ok(correios.crawlerWebSiteCorreios(cep)).build();
     }
 
     @GET

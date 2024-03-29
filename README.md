@@ -20,6 +20,7 @@ mvn clean install
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
+## Notas da versao 2.0.1
 
 ## Notas da versao 2.0
 
