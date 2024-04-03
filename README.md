@@ -20,7 +20,13 @@ mvn clean install
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
+## Notas da versao 2.0.2
+
+* Ajustes para separar o endereco do complemento
+
 ## Notas da versao 2.0.1
+
+* WSDL do correio exige senha alterado para fazer crawler do site do correios
 
 ## Notas da versao 2.0
 
