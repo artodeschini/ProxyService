@@ -192,9 +192,9 @@ public class ProxyWebServiceCorreios {
         try {
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new CorreiosServiceException("Erro ao abrir o crawler do correios", e);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new CorreiosServiceException("Erro ao abrir o crawler do correios", e);
         }
 
         System.out.println(response.body());
@@ -205,10 +205,13 @@ public class ProxyWebServiceCorreios {
         if (!json.getBoolean("erro")) {
             var array = json.getJsonArray("dados");
             var dados = array.getJsonObject(0);
+            var logradouroComplemento = dados.getString("logradouroDNEC");
+            var has = logradouroComplemento.indexOf("-") > 0;
             endereco = EnderecoCep.builder()
                     .uf(dados.getString("uf"))
                     .cidade(dados.getString("localidade"))
-                    .end(dados.getString("logradouroDNEC"))
+                    .end(has ? logradouroComplemento.split("-")[0].trim() : logradouroComplemento)
+                    .complemento(has ? logradouroComplemento.split("-")[1].trim() : "")
                     .bairro(dados.getString("bairro"))
                     .cep(dados.getString("cep"))
                     .build();
