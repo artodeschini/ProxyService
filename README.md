@@ -7,6 +7,7 @@
 * jsoup
 * quarkus
 * graalvm (opctional executar como nativo)
+* Docker
 
 ## to build
 
@@ -14,10 +15,25 @@
 mvn clean install
 ```
 
-## to run application
+## to run application local
 
 ```bash
 java -jar target/quarkus-app/quarkus-run.jar
+```
+
+## to run application with docker
+
+```bash
+mvn clean install
+
+# cria a imagem
+docker build -t proxy-service .
+
+# executa a applicacao de iterativa
+docker run -it --rm --name proxy-teste -p 8080:8080 proxy-service
+
+# executa como demon para vps
+docker run -d --rm --name proxy-teste -p 8080:8080 proxy-service
 ```
 
 ## Notas da versao 2.0.2
