@@ -1,6 +1,7 @@
 package org.todeschini.fenaban;
 
 import io.vertx.core.json.JsonArray;
+import lombok.extern.slf4j.Slf4j;
 import org.todeschini.dto.FeriadoFenaban;
 import org.todeschini.exception.FenanbanException;
 import org.todeschini.utils.HTTPS;
@@ -22,43 +23,43 @@ import java.util.logging.Logger;
 import static java.text.MessageFormat.format;
 
 @ApplicationScoped
+@Slf4j
 public class Fenaban {
-
-    private static final Logger LOGGER = Logger.getLogger(Fenaban.class.getName());
 
     private static final String URL_FERIADOS_BANCARIOS =
             //https://feriadosbancarios.febraban.org.br/Home/ObterFeriadosFederaisF?ano=2022 traz quarta de cinza e dia 31
             "https://feriadosbancarios.febraban.org.br/Home/ObterFeriadosFederais?ano={0}";
 
-    private int getMonthAsInt(String date) {
-        if (date.toLowerCase().contains("janeiro")) {
+    private int getMonthAsInt(String dataAsString) {
+        log.info("encontrando o mes pela descricao do mes");
+        if (dataAsString.toLowerCase().contains("janeiro")) {
             return 1;
-        } else if (date.toLowerCase().contains("fevereiro")) {
+        } else if (dataAsString.toLowerCase().contains("fevereiro")) {
             return 2;
-        } else if (date.toLowerCase().contains("março")) {
+        } else if (dataAsString.toLowerCase().contains("março")) {
             return 3;
-        } else if (date.toLowerCase().contains("mar")) {
+        } else if (dataAsString.toLowerCase().contains("mar")) {
             return 3;
-        } else if (date.toLowerCase().contains("abril")) {
+        } else if (dataAsString.toLowerCase().contains("abril")) {
             return 4;
-        } else if (date.toLowerCase().contains("maio")) {
+        } else if (dataAsString.toLowerCase().contains("maio")) {
             return 5;
-        } else if (date.toLowerCase().contains("junho")) {
+        } else if (dataAsString.toLowerCase().contains("junho")) {
             return 6;
-        } else if (date.toLowerCase().contains("julho")) {
+        } else if (dataAsString.toLowerCase().contains("julho")) {
             return 7;
-        } else if (date.toLowerCase().contains("agosto")) {
+        } else if (dataAsString.toLowerCase().contains("agosto")) {
             return 8;
-        } else if (date.toLowerCase().contains("setembro")) {
+        } else if (dataAsString.toLowerCase().contains("setembro")) {
             return 9;
-        } else if (date.toLowerCase().contains("outubro")) {
+        } else if (dataAsString.toLowerCase().contains("outubro")) {
             return 10;
-        } else if (date.toLowerCase().contains("novembro")) {
+        } else if (dataAsString.toLowerCase().contains("novembro")) {
             return 11;
-        } else if (date.toLowerCase().contains("dezembro")) {
+        } else if (dataAsString.toLowerCase().contains("dezembro")) {
             return 12;
         } else {
-            throw new FenanbanException("Erro ao obter o mes como numerico na data como string: ".concat(date));
+            throw new FenanbanException("Erro ao obter o mes como numerico na data como string: ".concat(dataAsString));
         }
     }
 
@@ -95,7 +96,7 @@ public class Fenaban {
 
         try {
             var uri = format(URL_FERIADOS_BANCARIOS, String.valueOf(ano).replaceAll("[^\\d.]", ""));
-            LOGGER.info(format("lendo informacoes da url {0}", uri));
+            log.info(format("lendo informacoes da url {0}", uri));
             var url = new URL(uri);
             var connection = (HttpsURLConnection) url.openConnection();
 
@@ -107,7 +108,7 @@ public class Fenaban {
                 line = reader.readLine();
             }
         } catch (IOException e) {
-            LOGGER.severe("erro ao ler os dados da pagina do FENABAN");
+            log.error("erro ao ler os dados da pagina do FENABAN");
             throw new FenanbanException("erro ao ler os dados da pagina do FENABAN", e);
         }
 

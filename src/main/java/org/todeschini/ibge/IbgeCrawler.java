@@ -1,5 +1,6 @@
 package org.todeschini.ibge;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.todeschini.dto.MuniciopioIbge;
@@ -27,17 +28,14 @@ import java.util.logging.Logger;
 import static java.text.MessageFormat.format;
 
 @ApplicationScoped
+@Slf4j
 public class IbgeCrawler {
-
-    private Logger LOGGER = Logger.getLogger(IbgeCrawler.class.getName());
 
     private static final String URL_IBGE = "https://www.ibge.gov.br/explica/codigos-dos-municipios.php";
 
     private Map<String, EstadoIbge> ESTATOS = new HashMap<>();
 
     private static final String FILE_NAME_HTML_SAVE = "file-ibge-page-{0}.html";
-
-
 
     public String openPage() {
         try {
@@ -60,7 +58,7 @@ public class IbgeCrawler {
                 line = reader.readLine();
             }
         } catch (IOException e) {
-            LOGGER.severe("erro ao ler os dados da pagina do ibge");
+            log.error("erro ao ler os dados da pagina do ibge");
             throw new IbgeCrawlerException("erro ao ler dados da pagina do ibge ", e);
         }
 
@@ -71,7 +69,7 @@ public class IbgeCrawler {
         try {
             Files.write(Paths.get(this.getFileName()), this.openPage().getBytes());
         } catch (IOException e) {
-            LOGGER.severe("erro ao gravar dados da pagina do ibge em arquivio");
+            log.error("erro ao gravar dados da pagina do ibge em arquivio");
             throw new IbgeCrawlerException("erro ao gravar dados da pagina do ibge em arquivio", e);
         }
     }
@@ -83,6 +81,7 @@ public class IbgeCrawler {
     private void limparCache() {
         ESTATOS.values().forEach(e -> e.getMuniciopios().clear());
         ESTATOS = new HashMap<>();
+        log.info("liberando memoria chamando gabage colletor");
         System.gc();
     }
 
@@ -132,11 +131,11 @@ public class IbgeCrawler {
                 line = reader.readLine();
             }
         } catch (IOException e) {
-            LOGGER.severe("erro ao ler dados do arquivo da pagina do ibge ");
+            log.error("erro ao ler dados do arquivo da pagina do ibge ");
             throw new IbgeCrawlerException("erro ao ler dados do arquivo da pagina do ibge ", e);
         }
 
-        LOGGER.info("FIM DA LEITURA DO ARQUIVO COMECANDO O PROCESSO DE CRAWLER");
+        log.info("FIM DA LEITURA DO ARQUIVO COMECANDO O PROCESSO DE CRAWLER");
 
         var doc = Jsoup.parse(html.toString());
         var tables = doc.select("table[class=container-uf]");
@@ -173,7 +172,7 @@ public class IbgeCrawler {
         MuniciopioIbge muncipio = null;
         estado = null;
 
-        LOGGER.info("FIM DA CARGA DE ESTADOS PELO CRAWLER");
+        log.info("FIM DA CARGA DE ESTADOS PELO CRAWLER");
         for (var index = 1; index < tables.size(); index++) {
 
             var thead = tables.get(index).select("thead").first();
@@ -182,7 +181,7 @@ public class IbgeCrawler {
             //System.out.println(theadEstado.attr("id"));
             uf = thead.attr("id").toUpperCase();
 
-            LOGGER.info(format("INICIANDO A EXTRACAO DAS CIDADES DO ESTADO {0}", uf));
+            log.info(format("INICIANDO A EXTRACAO DAS CIDADES DO ESTADO {0}", uf));
 
             estado = ESTATOS.get(uf);
 
@@ -208,7 +207,7 @@ public class IbgeCrawler {
 
                 estado.getMuniciopios().add(muncipio);
             }
-            LOGGER.info(format("FINALIZADO A EXTRACAO DAS CIDADES DO ESTADO {0} com {1} cidades.", uf, estado.getMuniciopios().size()));
+            log.info(format("FINALIZADO A EXTRACAO DAS CIDADES DO ESTADO {0} com {1} cidades.", uf, estado.getMuniciopios().size()));
         }
         System.gc();
     }
@@ -228,10 +227,12 @@ public class IbgeCrawler {
             throw new IbgeCrawlerException("Erro ao obter estado pela sigla");
         }
 
-        String busca = StringUtils.normalize(municipio);
+        var busca = StringUtils.normalize(municipio);
 
-        LOGGER.info("Realizando a busca em memoria agora do municipio");
-        return estado.getMuniciopios().stream().filter(m -> m.getNormalize().equals(busca)).findFirst();
+        log.info("Realizando a busca em memoria agora do municipio " + busca);
+        var find = estado.getMuniciopios().stream().filter(m -> m.getNormalize().equals(busca)).findFirst();
+        log.info("municipio encontrado " + find.toString());
+        return find;
     }
 
 //    public static void main(String[] args) {

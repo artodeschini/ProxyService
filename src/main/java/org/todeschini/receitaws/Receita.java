@@ -1,6 +1,7 @@
 package org.todeschini.receitaws;
 
 import io.vertx.core.json.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import org.todeschini.exception.ReceitaException;
 import org.todeschini.utils.HTTPS;
 
@@ -19,9 +20,8 @@ import java.util.logging.Logger;
 import static java.text.MessageFormat.format;
 
 @ApplicationScoped
+@Slf4j
 public class Receita {
-
-    private static final Logger LOGGER = Logger.getLogger(Receita.class.getName());
 
 //    Esta API permite 3 consultas por minuto. No caso do limite ser excedido, o código HTTP retornado é o 429.
     private static final String URL_RECEITA_WS = "https://receitaws.com.br/v1/cnpj/{0}";
@@ -62,7 +62,7 @@ public class Receita {
             }
 
         } catch (IOException e) {
-            LOGGER.severe("erro ao ler dados da API Receitas");
+            log.error("erro ao ler dados da API Receitas");
             throw new ReceitaException("erro ao ler dados da API Receitas ", e);
         }
 

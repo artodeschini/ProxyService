@@ -1,11 +1,13 @@
 package org.todeschini.correios;
 
 import io.vertx.core.json.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import org.todeschini.dto.MuniciopioIbge;
 import org.todeschini.exception.CorreiosServiceException;
 import org.todeschini.dto.EnderecoCep;
 import org.todeschini.ibge.IbgeCrawler;
 import org.todeschini.utils.HTTPS;
+import org.todeschini.utils.StringUtils;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -26,14 +28,17 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @ApplicationScoped
+@Slf4j
 public class ProxyWebServiceCorreios {
 
     @Inject
-    IbgeCrawler crawler;
+    IbgeCrawler crawler;// = new IbgeCrawler();
 
     /**
      * Este metodo com o wsdl agora requer autenticacao
@@ -45,7 +50,9 @@ public class ProxyWebServiceCorreios {
     public EnderecoCep call(String cep) throws CorreiosServiceException {
         try {
             HTTPS.k();
+            log.info("executando nao coferencia de certificados https");
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            log.error("Erro ao adicionar salta de seguranca ao chamar o webServices metodo k", e);
             throw new CorreiosServiceException("Erro ao adicionar salta de seguranca ao chamar o webServices metodo k", e);
         }
 
@@ -60,6 +67,7 @@ public class ProxyWebServiceCorreios {
                 .append("</soapenv:Envelope>").toString();
 
         var xml = new StringBuilder(1024);
+        log.info("envelope soap > ".concat(envelope.toString()));
 
         try {
             var ws = new URL("https://apps.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente?wsdl");
@@ -88,10 +96,12 @@ public class ProxyWebServiceCorreios {
                 }
             } catch (IOException io) {
                 //System.out.println("Failed to read from Stream");
-                io.printStackTrace();
+                log.error("Falha ao ler o InputStream ".concat(io.getMessage()), io);
+                //io.printStackTrace();
             }
 
         } catch (IOException e) {
+            log.error("Erro ao enviar envelope soap para o webservice dos correios", e);
             throw new CorreiosServiceException("Erro ao enviar envelope soap para o webservice dos correios", e);
         }
 
@@ -161,7 +171,8 @@ public class ProxyWebServiceCorreios {
     public EnderecoCep crawlerWebSiteCorreios(String cep) {
         // convertido do curl para java no site abaixo
         /// https://curlconverter.com/java/
-        cep = cep.replaceAll("","");
+        cep = cep.replaceAll("[^0-9]+","");
+        log.info("Busca por cep ".concat(cep));
 
         var body = new StringBuilder("pagina=%2Fapp%2Fendereco%2Findex.php&cepaux=&mensagem_alerta=&endereco=")
                 .append(cep).append("&tipoCEP=LOG");
@@ -197,16 +208,16 @@ public class ProxyWebServiceCorreios {
             throw new CorreiosServiceException("Erro ao abrir o crawler do correios", e);
         }
 
-        System.out.println(response.body());
+        log.info("retorno do crawler >> " + response.body());
 
         var endereco = new EnderecoCep();
 
         var json = new JsonObject(response.body().toString());
         if (!json.getBoolean("erro")) {
             var array = json.getJsonArray("dados");
-            var dados = array.getJsonObject(0);
-            var logradouroComplemento = dados.getString("logradouroDNEC");
-            var has = logradouroComplemento.indexOf("-") > 0;
+            var end = array.getJsonObject(0);
+            /* var logradouroComplemento = dados.getString("logradouroDNEC");
+            var has  = logradouroComplemento.indexOf("-") > 0;
             endereco = EnderecoCep.builder()
                     .uf(dados.getString("uf"))
                     .cidade(dados.getString("localidade"))
@@ -220,15 +231,129 @@ public class ProxyWebServiceCorreios {
 
             if (municiopioIbge.isPresent()) {
                 endereco.setIbge(municiopioIbge.get().getCodigo());
-            }
+            } */
+            return this.parseJsonToEnderecoCep(end);
         }
+
+        log.info("endereo resultante " + endereco.toString());
 
         return endereco;
     }
 
+    public List<EnderecoCep> buscaCepPorLogradouro(String logradouro, String cidade) {
+        HttpClient client = HttpClient.newHttpClient();
+        JsonObject result = null;
+
+        var saida = new ArrayList<EnderecoCep>();
+
+        var busca = new StringBuilder("pagina=%2Fapp%2Fendereco%2Findex.php&cepaux=&mensagem_alerta=&endereco=")
+                ///Rua%20Santa%20Rita%20de%20C%C3%A1ssia%20Florianopolis&tipoCEP=ALL\"")
+                .append(logradouro.replaceAll(" ", "+"));
+        if (cidade != null) {
+            cidade = StringUtils.normalize(cidade);
+            busca.append("+").append(cidade.replaceAll(" ", "+"));
+        }
+
+        busca.append("&tipoCEP=ALL");
+
+        //Rua%20Felipe%20Schmidt&tipoCEP=ALL\""
+        log.info("Realizando busca pelo crawler do correiros >>> " + busca.toString());
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://buscacepinter.correios.com.br/app/endereco/carrega-cep-endereco.php"))
+                .POST(HttpRequest.BodyPublishers.ofString(busca.toString()))
+                .setHeader("accept", "*/*")
+                .setHeader("accept-language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
+                .setHeader("cache-control", "no-store, no-cache, must-revalidate")
+                .setHeader("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+                //.setHeader("cookie", "rxVisitor=1711682303310C7S7RSSKJE9N3NPBA66601MEG2LO8EUV; _gid=GA1.3.81951936.1712287006; dtCookie=v_4_srv_2_sn_HOJVH40PO0C1UOK96E4D0V20PPL6081V_app-3A47fca5cf7bd2003c_1_ol_0_perc_100000_mul_1; INGRESSCOOKIE=1712287042.436.28332.786103|a18ecd9549ddde51e3f47ee40455f85d; buscacep=ptbcd0t4lbl1mn659edpeb56pn; LBprdint2=1278869514.47873.0000; LBprdExt1=701038602.47873.0000; _ga=GA1.3.887944617.1711682292; rxvt=1712288881826|1712287006644; dtPC=2$487081736_790h-vMSFCUGCSDGACPDIWMMUUULCJCGTPLHLP-0e0; dtSa=true%7CC%7C-1%7CBusca%20CEP%20ou%20Endere%C3%A7o%7C-%7C1712287084863%7C487081736_790%7Chttps%3A%2F%2Fwww.correios.com.br%2F%7C%7C%7C%7C; _ga_J59GSF3WW5=GS1.1.1712287005.3.1.1712287084.57.0.0")
+                .setHeader("origin", "https://buscacepinter.correios.com.br")
+                .setHeader("referer", "https://buscacepinter.correios.com.br/app/endereco/index.php?t")
+                //.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"")
+                //.setHeader("sec-ch-ua-mobile", "?0")
+                //.setHeader("sec-ch-ua-platform", "\"macOS\"")
+                //.setHeader("sec-fetch-dest", "empty")
+                //.setHeader("sec-fetch-mode", "cors")
+                //.setHeader("sec-fetch-site", "same-origin")
+                //.setHeader("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
+                .build();
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            log.info("Resposta obtida pela busca por logradouro");
+            log.info(response.body());
+            //System.out.println(response.body());
+            result = new JsonObject(response.body());
+
+            if (!result.getBoolean("erro")) {
+                var dados = result.getJsonArray("dados");
+                for (int i = 0; i < dados.size(); i++) {
+                    var json = dados.getJsonObject(i);
+                    /* Optional<MuniciopioIbge> ibge =
+                        crawler.findMunicipioIbge(temp.getString("uf"), temp.getString("localidade"));
+                    if (ibge.isPresent()) {
+                        // temp.put("ibge", ibge.get().getCodigo());
+                        codigoCidadeIBGE = ibge.get().getCodigo();
+                    } else {
+                        codigoCidadeIBGE = null;
+                    }
+                    var logradouroComplemento = temp.getString("logradouroDNEC");
+                    var has  = logradouroComplemento.indexOf("-") > 0;
+                    endereco = EnderecoCep.builder()
+                            .uf(temp.getString("uf"))
+                            .cidade(temp.getString("localidade"))
+                            .end(has ? logradouroComplemento.split("-")[0].trim() : logradouroComplemento)
+                            .complemento(has ? logradouroComplemento.split("-")[1].trim() : "")
+                            .bairro(temp.getString("bairro"))
+                            .cep(temp.getString("cep"))
+                            .ibge(codigoCidadeIBGE)
+                            .build(); */
+
+                    saida.add(this.parseJsonToEnderecoCep(json));
+                }
+            } else {
+                log.error("nao obteve resposta do crawler");
+            }
+
+        } catch (IOException e) {
+            throw new CorreiosServiceException(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            throw new CorreiosServiceException(e.getMessage(), e);
+        }
+
+        return saida;
+    }
+
+    private EnderecoCep parseJsonToEnderecoCep(JsonObject json) {
+        Optional<MuniciopioIbge> ibge =
+                crawler.findMunicipioIbge(json.getString("uf"), json.getString("localidade"));
+
+        String codigoCidadeIBGE = null;
+
+        if (ibge.isPresent()) {
+            codigoCidadeIBGE = ibge.get().getCodigo();
+        } else {
+            codigoCidadeIBGE = null;
+        }
+        var logradouroComplemento = json.getString("logradouroDNEC");
+        var has = logradouroComplemento.indexOf("-") > 0;
+
+        return EnderecoCep.builder()
+                .uf(json.getString("uf"))
+                .cidade(json.getString("localidade"))
+                .end(has ? logradouroComplemento.split("-")[0].trim() : logradouroComplemento)
+                .complemento(has ? logradouroComplemento.split("-")[1].trim() : "")
+                .bairro(json.getString("bairro"))
+                .cep(json.getString("cep"))
+                .ibge(codigoCidadeIBGE)
+                .build();
+    }
+
 //	public static void main(String[] args) {
 //		ProxyWebServiceCorreios m = new ProxyWebServiceCorreios();
-//		System.out.println(m.crawlerWebSiteCorreios("88090352"));
+//		//System.out.println(m.crawlerWebSiteCorreios("88090352"));
+//        var s = m.buscaCepPorLogradouro("Rua Santa Rita de Cassia", "Florianopolis");
+//        s.forEach(System.out::println);
 //	}
 
 }

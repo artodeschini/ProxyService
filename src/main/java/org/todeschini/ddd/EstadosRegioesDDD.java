@@ -1,6 +1,7 @@
 package org.todeschini.ddd;
 
 import io.quarkus.runtime.StartupEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.todeschini.dto.EstadoDdd;
 import org.todeschini.dto.EstadoIbge;
 import org.todeschini.ibge.IbgeCrawler;
@@ -13,9 +14,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
+@Slf4j
 public class EstadosRegioesDDD {
-
-    private static final Logger LOGGER = Logger.getLogger(EstadosRegioesDDD.class.getName());
 
     private static final String SUDESTE = "SUDESTE";
     private static final String NORTE = "NORTE";
@@ -26,7 +26,7 @@ public class EstadosRegioesDDD {
     private Map<String, EstadoDdd> ESTADOS = new HashMap<>();
 
     void onStart(@Observes StartupEvent ev) {
-        LOGGER.info("INICIANDO CACHE DE ESTADOS REGIEOS E DDD");
+        log.info("INICIANDO CACHE DE ESTADOS REGIEOS E DDD");
         this.populaCache();
     }
 

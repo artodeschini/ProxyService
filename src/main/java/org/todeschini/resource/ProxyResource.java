@@ -38,6 +38,12 @@ public class ProxyResource {
     }
 
     @GET
+    @Path("correios/busca/{logradouro}/{cidade}")
+    public Response findPorLogradouro(@PathParam("logradouro") String logradouro, @PathParam("cidade") String cidade) {
+        return Response.ok(correios.buscaCepPorLogradouro(logradouro, cidade)).build();
+    }
+
+    @GET
     @Path("ibge/{uf}/{municipio}")
     public Response find(@PathParam("uf") String uf, @PathParam("municipio") String municipio) {
         return Response.ok(ibge.findMunicipioIbge(uf, municipio)).build();
