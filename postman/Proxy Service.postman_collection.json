@@ -12,7 +12,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/proxy/correios/04548-005",
+					"raw": "localhost:8080/proxy/correios/88090-400",
 					"host": [
 						"localhost"
 					],
@@ -20,7 +20,29 @@
 					"path": [
 						"proxy",
 						"correios",
-						"04548-005"
+						"88090-400"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Busca Por Cep pelo Logradouro",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/proxy/correios/busca/Rua Santa Rita de Cassia/Florianopolis",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"proxy",
+						"correios",
+						"busca",
+						"Rua Santa Rita de Cassia",
+						"Florianopolis"
 					]
 				}
 			},
@@ -32,7 +54,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/proxy/ibge/RS/Porto%20Alegre",
+					"raw": "localhost:8080/proxy/ibge/RS/Porto Alegre",
 					"host": [
 						"localhost"
 					],
@@ -41,7 +63,7 @@
 						"proxy",
 						"ibge",
 						"RS",
-						"Porto%20Alegre"
+						"Porto Alegre"
 					]
 				}
 			},
@@ -53,7 +75,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/proxy/ibge/SC",
+					"raw": "localhost:8080/proxy/ibge/BA",
 					"host": [
 						"localhost"
 					],
@@ -61,7 +83,7 @@
 					"path": [
 						"proxy",
 						"ibge",
-						"SC"
+						"BA"
 					]
 				}
 			},
@@ -73,7 +95,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/proxy/feriados/2022",
+					"raw": "localhost:8080/proxy/feriados/2024",
 					"host": [
 						"localhost"
 					],
@@ -81,7 +103,7 @@
 					"path": [
 						"proxy",
 						"feriados",
-						"2022"
+						"2024"
 					]
 				}
 			},
@@ -135,7 +157,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "localhost:8080/proxy/regiao/SUL",
+					"raw": "localhost:8080/proxy/regiao/SUDESTE",
 					"host": [
 						"localhost"
 					],
@@ -143,7 +165,7 @@
 					"path": [
 						"proxy",
 						"regiao",
-						"SUL"
+						"SUDESTE"
 					]
 				}
 			},
