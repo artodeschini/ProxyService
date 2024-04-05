@@ -23,4 +23,4 @@ WORKDIR /app
 
 COPY target/* /app/target
 
-ENTRYPOINT ["java", "-Duser.country=BR", "-Duser.language=pt","-Dquarkus.http.host=0.0.0.0", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-Dquarkus.profile=quarkus:dev", "-jar", "/app/target/quarkus-app/quarkus-run.jar"]
+ENTRYPOINT ["java", "-Duser.country=BR", "-Duser.language=pt","-Dquarkus.http.host=0.0.0.0", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-jar", "/app/target/quarkus-app/quarkus-run.jar"]
