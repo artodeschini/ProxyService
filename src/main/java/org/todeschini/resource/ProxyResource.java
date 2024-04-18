@@ -2,8 +2,11 @@ package org.todeschini.resource;
 
 import org.todeschini.correios.ProxyWebServiceCorreios;
 import org.todeschini.ddd.EstadosRegioesDDD;
+import org.todeschini.dto.ConsultaGoogle;
 import org.todeschini.fenaban.Fenaban;
+import org.todeschini.googlemap.GoogleMaps;
 import org.todeschini.ibge.IbgeCrawler;
+import org.todeschini.moedas.ConversorMoedas;
 import org.todeschini.receitaws.Receita;
 
 import javax.inject.Inject;
@@ -17,19 +20,25 @@ import javax.ws.rs.core.Response;
 public class ProxyResource {
 
     @Inject
-    ProxyWebServiceCorreios correios;
+    private ProxyWebServiceCorreios correios;
 
     @Inject
-    IbgeCrawler ibge;
+    private IbgeCrawler ibge;
 
     @Inject
-    Fenaban fenaban;
+    private Fenaban fenaban;
 
     @Inject
-    Receita receita;
+    private Receita receita;
 
     @Inject
-    EstadosRegioesDDD estadosRegioes;
+    private EstadosRegioesDDD estadosRegioes;
+
+    @Inject
+    private GoogleMaps google;
+
+    @Inject
+    private ConversorMoedas conversorMoedas;
 
     @GET
     @Path("correios/{cep}")
@@ -89,5 +98,33 @@ public class ProxyResource {
     @Path("/regiao/estados")
     public Response listaTodosEstados() {
         return Response.ok(estadosRegioes.listaTodosEstados()).build();
+    }
+
+    @POST
+    @Path("/disatancia")
+    public Response distanciaEntre(ConsultaGoogle consulta) {
+        return Response.ok(google.calcularDistancia(
+                consulta.getOrigem(),
+                consulta.getNumeroOrigem(),
+                consulta.getDestino(),
+                consulta.getNumeroDestino())).build();
+    }
+
+    @GET
+    @Path("/moedas/{de}/{para}")
+    public Response cotacaoMoeda(@PathParam("de") String de, @PathParam("para") String para) {
+        return Response.ok(conversorMoedas.converter(de, para)).build();
+    }
+
+    @GET
+    @Path("/moedas/dolar")
+    public Response cotacaoDolar() {
+        return Response.ok(conversorMoedas.cotacaoDolarReal()).build();
+    }
+
+    @GET
+    @Path("/moedas/euro")
+    public Response cotacaoEuro() {
+        return Response.ok(conversorMoedas.cotacaoEuroReal()).build();
     }
 }

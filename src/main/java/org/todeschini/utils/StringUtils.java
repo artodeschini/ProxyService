@@ -30,4 +30,22 @@ public class StringUtils {
 
         return buffer.toString();
     }
+
+    public static String removerCaracteresEspeciais(String str) {
+        return str.replaceAll("[^a-zA-Z0-9]", " ").replaceAll("\\s+", " ");
+    }
+    public static String removerAcentos(final String str) {
+        final String valor = Normalizer.normalize(str, Normalizer.Form.NFD).trim();
+        return removerCaracteresEspeciais(valor.replaceAll("[^\\p{ASCII}]", ""));
+        //return valor;
+    }
+
+    public static boolean isNotEmpty(String str) {
+        if (str == null) {
+            return true;
+        } else {
+            return !str.isEmpty();
+        }
+
+    }
 }
