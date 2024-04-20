@@ -36,11 +36,15 @@ docker run -it --rm --name proxy-teste -p 8080:8080 proxy-service
 docker run -d --rm --name proxy-teste -p 8080:8080 proxy-service
 ```
 
-## Notas da versao 2.0.3
+## Notas da versao 2.0.4
 
 * Adicionado calculo de distancia entre cep e cep
 * Adicioando api de conversao de moedas
 * Adicionado balanceador de carga para alterar na busca por cep nao seja bloqueada por excesso de chamadas
+
+## Notas da versao 2.0.3
+
+* Adicionado busca por logradouro 
 
 ## Notas da versao 2.0.2
 
