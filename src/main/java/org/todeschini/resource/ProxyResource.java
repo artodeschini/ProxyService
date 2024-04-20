@@ -47,9 +47,10 @@ public class ProxyResource {
     }
 
     @GET
-    @Path("correios/busca/{logradouro}/{cidade}")
-    public Response findPorLogradouro(@PathParam("logradouro") String logradouro, @PathParam("cidade") String cidade) {
-        return Response.ok(correios.buscaCepPorLogradouro(logradouro, cidade)).build();
+    @Path("correios/busca/{logradouro}/{cidade}/{uf}")
+    public Response findPorLogradouro(
+            @PathParam("logradouro") String logradouro, @PathParam("cidade") String cidade, @PathParam("uf") String uf) {
+        return Response.ok(correios.buscaCepPorLogradouro(logradouro, cidade, uf)).build();
     }
 
     @GET
@@ -109,11 +110,7 @@ public class ProxyResource {
     @POST
     @Path("/disatancia")
     public Response distanciaEntre(ConsultaGoogle consulta) {
-        return Response.ok(google.calcularDistancia(
-                consulta.getOrigem(),
-                consulta.getNumeroOrigem(),
-                consulta.getDestino(),
-                consulta.getNumeroDestino())).build();
+        return Response.ok(google.calcularDistancia(consulta)).build();
     }
 
     @GET

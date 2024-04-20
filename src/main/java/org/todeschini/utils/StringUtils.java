@@ -34,10 +34,14 @@ public class StringUtils {
     public static String removerCaracteresEspeciais(String str) {
         return str.replaceAll("[^a-zA-Z0-9]", " ").replaceAll("\\s+", " ");
     }
-    public static String removerAcentos(final String str) {
+    public static String removerAcentos(String str) {
         final String valor = Normalizer.normalize(str, Normalizer.Form.NFD).trim();
         return removerCaracteresEspeciais(valor.replaceAll("[^\\p{ASCII}]", ""));
         //return valor;
+    }
+
+    public static String replaceSpaceToPlus(String str) {
+        return str.replaceAll("\\s+", "+");
     }
 
     public static boolean isNotEmpty(String str) {

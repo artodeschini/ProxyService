@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import org.todeschini.correios.ProxyWebServiceCorreios;
+import org.todeschini.dto.ConsultaGoogle;
 import org.todeschini.dto.EnderecoBuscaGoogle;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -15,6 +16,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+import static java.text.MessageFormat.format;
+
 @ApplicationScoped
 @Slf4j
 public class GoogleMaps {
@@ -22,9 +25,7 @@ public class GoogleMaps {
     @Inject
     private ProxyWebServiceCorreios correios;
 
-    private static final double AVERAGE_RADIUS_OF_EARTH = 6371;
-
-    private static final String GOOGLE_API_KEY = System.getenv("GOOGLE_API_KEY");
+    private static String GOOGLE_API_KEY = null;
 
     private static final String SEPARADOR = ", ";
     private static final String PROTOCOLO_HTTPS = "https://";
@@ -125,9 +126,9 @@ public class GoogleMaps {
 
     private String callGoogleDirections(String urlDirections) throws Exception {
         var url = new URL(urlDirections.replace(" ", "%20"));
-        return callUrl(url);
+        var  document = callUrl(url);
 
-        //return parseJsonToDistance(document);
+        return parseJsonToDistance(document);
     }
 
     private String parseJsonToDistance(final String document) {
@@ -166,18 +167,20 @@ public class GoogleMaps {
             }
 
         } catch (Exception e) {
-            log.debug("Erro ao consultar api do google ".concat(e.getMessage()), e);
+            log.debug(format("Erro ao consultar api do google {0}", e.getMessage()), e);
         }
 
         return json.toString();
     }
 
-    public JsonObject calcularDistancia(String strCepOrigemStr, int numeroOrigem, String strCepDestino, int numeroDestino) {
-        var cepOrigem = correios.crawlerWebSiteCorreios(strCepOrigemStr);
-        var cepDestino = correios.crawlerWebSiteCorreios(strCepDestino);
+    public JsonObject calcularDistancia(ConsultaGoogle consulta) {
+        GOOGLE_API_KEY = consulta.getKey();
 
-        var origem = EnderecoBuscaGoogle.toEnderecoCepToEnderecoBuscaGoogle(cepOrigem, String.valueOf(numeroOrigem));
-        var destino = EnderecoBuscaGoogle.toEnderecoCepToEnderecoBuscaGoogle(cepDestino, String.valueOf(numeroDestino));
+        var cepOrigem = correios.call(consulta.getOrigem());
+        var cepDestino = correios.call(consulta.getDestino());
+
+        var origem = EnderecoBuscaGoogle.toEnderecoCepToEnderecoBuscaGoogle(cepOrigem, String.valueOf(consulta.getNumeroOrigem()));
+        var destino = EnderecoBuscaGoogle.toEnderecoCepToEnderecoBuscaGoogle(cepDestino, String.valueOf(consulta.getNumeroDestino()));
 
         var json = new JsonObject();
         json.put("origem", origem.toJsonObject());
@@ -186,20 +189,4 @@ public class GoogleMaps {
 
         return json;
     }
-
-
-//    public static void main(String[] args) throws Exception {
-//        //var googleURL = "https://maps.google.com/maps/api/directions/json?origin=88015-190, Florianopolis - SC, Centro, Avenida Aycar Saddi, 190&destination=88090-351, Florianopolis - SC, Coloninha, Rua Santa Rita de Cassia, 123&region=br&sensor=false&key=
-//
-//
-//        var google = new GoogleMaps();
-//        //google.getDistanceGoogleDirections(googleURL);
-//        //google.getJson(googleURL);
-//        //google.getDocumento(new URL(googleURL));
-//        //google.findGeocodeInformation("Rua Santa Rita de Cassia, 829 Florianopolis Santa Catarina", "teste");
-//       //var rest = google.calcularDistancia("88015-190", 190, "88090-351", 123);
-//        var rest = google.calcularDistancia("88090350", 829, "90420121", 914);
-//        System.out.println(rest);
-//    }
-
 }

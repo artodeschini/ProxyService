@@ -1,5 +1,6 @@
 package org.todeschini.correios;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.todeschini.dto.MuniciopioIbge;
@@ -35,6 +36,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.text.MessageFormat.format;
+import static org.todeschini.utils.StringUtils.replaceSpaceToPlus;
 
 @ApplicationScoped
 @Slf4j
@@ -44,6 +46,9 @@ public class ProxyWebServiceCorreios {
     IbgeCrawler crawler;
 
     private final AtomicInteger i = new AtomicInteger(0);
+    private final AtomicInteger l = new AtomicInteger(0);
+
+    private final int CONTROLE = Integer.MAX_VALUE /2;
 
     public EnderecoCep call(String cep) {
         EnderecoCep e = null;
@@ -191,11 +196,10 @@ public class ProxyWebServiceCorreios {
         return enderecoCEP;
     }
 
-    public EnderecoCep crawlerWebSiteCorreios(String cep) {
+    private EnderecoCep crawlerWebSiteCorreios(String cep) {
         // convertido do curl para java no site abaixo
         /// https://curlconverter.com/java/
         cep = removeNoDigitsFromCep(cep);
-        log.info("Busca por cep ".concat(cep));
 
         var body = new StringBuilder("pagina=%2Fapp%2Fendereco%2Findex.php&cepaux=&mensagem_alerta=&endereco=")
                 .append(cep).append("&tipoCEP=LOG");
@@ -220,8 +224,6 @@ public class ProxyWebServiceCorreios {
             throw new CorreiosServiceException("Erro ao abrir o crawler do correios", e);
         }
 
-        // log.info("retorno do crawler >> " + response.body());
-
         var endereco = new EnderecoCep();
 
         var json = new JsonObject(response.body().toString());
@@ -237,7 +239,61 @@ public class ProxyWebServiceCorreios {
         return endereco;
     }
 
-    public List<EnderecoCep> buscaCepPorLogradouro(String logradouro, String cidade) {
+    public List<EnderecoCep> buscaCepPorLogradouro(String logradouro, String cidade, String uf) {
+        List<EnderecoCep> enderecos = new ArrayList<>();
+        if (l.incrementAndGet() % 2 == 0 ) {
+            log.info("buscando logradouro pelo viacep");
+            enderecos.addAll(buscaCepPorLogradouroViaCep(logradouro, cidade, uf));
+        } else {
+            log.info("buscando logradouro pelo pelo correio");
+            enderecos.addAll(buscaCepPorLogradouroCorreios(logradouro, cidade, uf));
+        }
+
+        if (l.get() > CONTROLE) {
+            l.set(0);
+        }
+
+        return enderecos;
+    }
+
+    private List<EnderecoCep> buscaCepPorLogradouroViaCep(String logradouro, String cidade, String uf) {
+        var saida = new ArrayList<EnderecoCep>();
+        HttpClient client = HttpClient.newHttpClient();
+        //var url = format("viacep.com.br/ws/RS/Porto Alegre/Domingos+Jose/json/", cep);
+        var url = format("https://viacep.com.br/ws/{0}/{1}/{2}/json/",
+                uf.toUpperCase(),
+                replaceSpaceToPlus(cidade),
+                replaceSpaceToPlus(logradouro));
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            var array = new JsonArray(response.body());
+            JsonObject json;
+            for (int i = 0; i < array.size(); i++) {
+                json = array.getJsonObject(i);
+                saida.add(
+                        EnderecoCep.builder()
+                                .cep(json.getString("cep"))
+                                .uf(json.getString("uf"))
+                                .cidade(json.getString("localidade"))
+                                .bairro(json.getString("bairro"))
+                                .ibge(json.getString("ibge"))
+                                .end(json.getString("logradouro"))
+                                .complemento(json.getString("complemento"))
+                                .build());
+            }
+
+        } catch (Exception e) {
+            throw new CorreiosServiceException(format("Erro ao chamar a url {0} pela api ViaCep" , url));
+        }
+        return saida;
+    }
+
+    private List<EnderecoCep> buscaCepPorLogradouroCorreios(String logradouro, String cidade, String uf) {
         HttpClient client = HttpClient.newHttpClient();
         JsonObject result = null;
 
@@ -277,7 +333,9 @@ public class ProxyWebServiceCorreios {
                 var dados = result.getJsonArray("dados");
                 for (int i = 0; i < dados.size(); i++) {
                     var json = dados.getJsonObject(i);
-                    saida.add(this.parseJsonToEnderecoCep(json));
+                    if (uf.equalsIgnoreCase(json.getString("uf"))) {
+                        saida.add(this.parseJsonToEnderecoCep(json));
+                    }
                 }
             } else {
                 log.error("nao obteve resposta do crawler");
@@ -319,7 +377,7 @@ public class ProxyWebServiceCorreios {
         return cep.replaceAll("[^0-9]+","");
     }
 
-    public EnderecoCep callViaCep(String cep) {
+    private EnderecoCep callViaCep(String cep) {
         cep = removeNoDigitsFromCep(cep);
         HttpClient client = HttpClient.newHttpClient();
         var url = format("https://viacep.com.br/ws/{0}/json/", cep);
@@ -346,7 +404,7 @@ public class ProxyWebServiceCorreios {
         }
     }
 
-    public EnderecoCep callAwesomeApi(String cep) {
+    private EnderecoCep callAwesomeApi(String cep) {
         cep = removeNoDigitsFromCep(cep);
         HttpClient client = HttpClient.newHttpClient();
         var url = format("https://cep.awesomeapi.com.br/json/{0}", cep);
