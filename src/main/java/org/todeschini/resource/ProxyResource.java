@@ -43,7 +43,7 @@ public class ProxyResource {
     @GET
     @Path("correios/{cep}")
     public Response find(@PathParam("cep") String cep) {
-        return Response.ok(correios.crawlerWebSiteCorreios(cep)).build();
+        return Response.ok(correios.call(cep)).build();
     }
 
     @GET
@@ -62,6 +62,12 @@ public class ProxyResource {
     @Path("ibge/{uf}")
     public Response findMunicipios(@PathParam("uf") String uf) {
         return Response.ok(ibge.todosMunicipoiosPorEstado(uf)).build();
+    }
+
+    @GET
+    @Path("ibge/estado/{uf}")
+    public Response findEstado(@PathParam("uf") String uf) {
+        return Response.ok(ibge.getEstadoPorUf(uf)).build();
     }
 
     @GET

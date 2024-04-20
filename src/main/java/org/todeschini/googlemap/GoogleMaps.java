@@ -20,11 +20,7 @@ import java.nio.charset.StandardCharsets;
 public class GoogleMaps {
 
     @Inject
-    private ProxyWebServiceCorreios correios; // = new ProxyWebServiceCorreios();
-
-    private static final String GEOCODE_INICIO = "do inicio";
-
-    private static final String GEOCODE_FINAL = "do final";
+    private ProxyWebServiceCorreios correios;
 
     private static final double AVERAGE_RADIUS_OF_EARTH = 6371;
 
@@ -117,7 +113,6 @@ public class GoogleMaps {
     }
 
     /**
-     * @param urlDirections url de pesquisa
      * @return Distancia em KM localizada no xml
      * @throws Exception .
      */
@@ -126,6 +121,13 @@ public class GoogleMaps {
         var document = callUrl(url);
 
         return parseJsonToDistance(document);
+    }
+
+    private String callGoogleDirections(String urlDirections) throws Exception {
+        var url = new URL(urlDirections.replace(" ", "%20"));
+        return callUrl(url);
+
+        //return parseJsonToDistance(document);
     }
 
     private String parseJsonToDistance(final String document) {
@@ -170,14 +172,19 @@ public class GoogleMaps {
         return json.toString();
     }
 
-    public String calcularDistancia(String strCepOrigemStr, int numeroOrigem, String strCepDestino, int numeroDestino) {
+    public JsonObject calcularDistancia(String strCepOrigemStr, int numeroOrigem, String strCepDestino, int numeroDestino) {
         var cepOrigem = correios.crawlerWebSiteCorreios(strCepOrigemStr);
         var cepDestino = correios.crawlerWebSiteCorreios(strCepDestino);
 
         var origem = EnderecoBuscaGoogle.toEnderecoCepToEnderecoBuscaGoogle(cepOrigem, String.valueOf(numeroOrigem));
         var destino = EnderecoBuscaGoogle.toEnderecoCepToEnderecoBuscaGoogle(cepDestino, String.valueOf(numeroDestino));
 
-        return calcularDistancia(origem, destino);
+        var json = new JsonObject();
+        json.put("origem", origem.toJsonObject());
+        json.put("destino", destino.toJsonObject());
+        json.put("distancia", calcularDistancia(origem, destino));
+
+        return json;
     }
 
 

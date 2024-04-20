@@ -235,6 +235,12 @@ public class IbgeCrawler {
         return find;
     }
 
+    public EstadoIbge getEstadoPorUf(String uf) {
+        var estado = ESTATOS.get(uf);
+
+        return estado;
+    }
+
 //    public static void main(String[] args) {
 //        var ibge = new IbgeCrawler();
 //

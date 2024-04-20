@@ -16,6 +16,7 @@ import javax.net.ssl.X509TrustManager;
 @ApplicationScoped
 public abstract class HTTPS {
 	
+	@Deprecated
 	public static void k() throws NoSuchAlgorithmException, KeyManagementException {
 		/**
 		 * Faz que ignore a falta de certificado HTTPS

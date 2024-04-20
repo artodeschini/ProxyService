@@ -91,12 +91,12 @@ public class ConversorMoedas {
         }
     }
 
-    public static void main(String[] args) {
-        var c = new ConversorMoedas();
-        //c.converter("USD-BRL");
-        System.out.println(c.cotacaoDolarReal());
-        System.out.println(c.cotacaoEuroReal());
-        System.out.println(c.getMaptipoMoedas());
-        c.converter("XYZ", "BLA");
-    }
+//    public static void main(String[] args) {
+//        var c = new ConversorMoedas();
+//        //c.converter("USD-BRL");
+//        System.out.println(c.cotacaoDolarReal());
+//        System.out.println(c.cotacaoEuroReal());
+//        System.out.println(c.getMaptipoMoedas());
+//        c.converter("XYZ", "BLA");
+//    }
 }

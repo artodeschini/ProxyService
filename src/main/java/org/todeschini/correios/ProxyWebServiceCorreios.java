@@ -32,22 +32,47 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.text.MessageFormat.format;
 
 @ApplicationScoped
 @Slf4j
 public class ProxyWebServiceCorreios {
 
     @Inject
-    IbgeCrawler crawler;// = new IbgeCrawler();
+    IbgeCrawler crawler;
 
-    /**
-     * Este metodo com o wsdl agora requer autenticacao
-     * @param cep
-     * @return
-     * @throws CorreiosServiceException
-     */
+    private final AtomicInteger i = new AtomicInteger(0);
+
+    public EnderecoCep call(String cep) {
+        EnderecoCep e = null;
+        switch (i.get()) {
+            case 1:
+                log.info("Executando call viacep ");
+                e = callViaCep(cep);
+                break;
+            case 2:
+                log.info("Executando call AwesomeApi ");
+                e = callAwesomeApi(cep);
+                break;
+            default:
+                log.info("Executando crawler correios ");
+                e = crawlerWebSiteCorreios(cep);
+                break;
+        }
+
+        i.incrementAndGet();
+        if (i.get() > 3) {
+            i.set(0);
+        }
+
+        return e;
+    }
+
     @Deprecated
-    public EnderecoCep call(String cep) throws CorreiosServiceException {
+    public EnderecoCep callOld(String cep) throws CorreiosServiceException {
+        cep = removeNoDigitsFromCep(cep);
         try {
             HTTPS.k();
             log.info("executando nao coferencia de certificados https");
@@ -61,7 +86,7 @@ public class ProxyWebServiceCorreios {
                 .append("   <soapenv:Header/>")
                 .append("   <soapenv:Body>")
                 .append("      <cli:consultaCEP>")
-                .append("         <cep>").append(cep.replaceAll("[^\\d.]", "")).append("</cep>")
+                .append("         <cep>").append(removeNoDigitsFromCep(cep)).append("</cep>")
                 .append("     </cli:consultaCEP>")
                 .append("   </soapenv:Body>")
                 .append("</soapenv:Envelope>").toString();
@@ -95,9 +120,7 @@ public class ProxyWebServiceCorreios {
                     line = wsReader.readLine();
                 }
             } catch (IOException io) {
-                //System.out.println("Failed to read from Stream");
-                log.error("Falha ao ler o InputStream ".concat(io.getMessage()), io);
-                //io.printStackTrace();
+                log.error(format("Falha ao ler o InputStream {0}", io.getMessage()), io);
             }
 
         } catch (IOException e) {
@@ -171,7 +194,7 @@ public class ProxyWebServiceCorreios {
     public EnderecoCep crawlerWebSiteCorreios(String cep) {
         // convertido do curl para java no site abaixo
         /// https://curlconverter.com/java/
-        cep = cep.replaceAll("[^0-9]+","");
+        cep = removeNoDigitsFromCep(cep);
         log.info("Busca por cep ".concat(cep));
 
         var body = new StringBuilder("pagina=%2Fapp%2Fendereco%2Findex.php&cepaux=&mensagem_alerta=&endereco=")
@@ -181,34 +204,23 @@ public class ProxyWebServiceCorreios {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://buscacepinter.correios.com.br/app/endereco/carrega-cep-endereco.php"))
-                //.POST(BodyPublishers.ofString("pagina=%2Fapp%2Fendereco%2Findex.php&cepaux=&mensagem_alerta=&endereco=88090350&tipoCEP=LOG"))
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .setHeader("accept", "*/*")
                 .setHeader("accept-language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
                 .setHeader("cache-control", "no-store, no-cache, must-revalidate")
                 .setHeader("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
-                //.setHeader("cookie", "_ga=GA1.3.887944617.1711682292; _gid=GA1.3.1273195035.1711682296; rxVisitor=1711682303310C7S7RSSKJE9N3NPBA66601MEG2LO8EUV; rxvt=1711684103323|1711682303310; dtCookie=v_4_srv_1_sn_RBS8EN9H569H0T1HBAHDJJ5QM2I5EHVL_app-3A47fca5cf7bd2003c_1_ol_0_perc_100000_mul_1; dtSa=true%7CC%7C-1%7CBusca%20CEP%20ou%20Endere%C3%A7o%7C-%7C1711682353752%7C482303309_298%7Chttps%3A%2F%2Fwww.correios.com.br%2F%7C%7C%7C%7C; INGRESSCOOKIE=1711682355.215.10718.823969|a18ecd9549ddde51e3f47ee40455f85d; buscacep=v7fhph7naq8tk60cjl9n4t54fl; LBprdint2=1614413834.47873.0000; LBprdExt1=701038602.47873.0000; _ga_J59GSF3WW5=GS1.1.1711682291.1.1.1711682353.60.0.0; dtPC=1$482303309_298h-vVMEHHARALKMPSEDPIMEFGLPMFWNNHOSR-0e0")
                 .setHeader("origin", "https://buscacepinter.correios.com.br")
                 .setHeader("referer", "https://buscacepinter.correios.com.br/app/endereco/index.php")
-                //.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"")
-                //.setHeader("sec-ch-ua-mobile", "?0")
-                //.setHeader("sec-ch-ua-platform", "\"macOS\"")
-                //.setHeader("sec-fetch-dest", "empty")
-                //.setHeader("sec-fetch-mode", "cors")
-                //.setHeader("sec-fetch-site", "same-origin")
-                //.setHeader("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
                 .build();
 
         HttpResponse<String> response = null;
         try {
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException e) {
-            throw new CorreiosServiceException("Erro ao abrir o crawler do correios", e);
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             throw new CorreiosServiceException("Erro ao abrir o crawler do correios", e);
         }
 
-        log.info("retorno do crawler >> " + response.body());
+        // log.info("retorno do crawler >> " + response.body());
 
         var endereco = new EnderecoCep();
 
@@ -216,22 +228,7 @@ public class ProxyWebServiceCorreios {
         if (!json.getBoolean("erro")) {
             var array = json.getJsonArray("dados");
             var end = array.getJsonObject(0);
-            /* var logradouroComplemento = dados.getString("logradouroDNEC");
-            var has  = logradouroComplemento.indexOf("-") > 0;
-            endereco = EnderecoCep.builder()
-                    .uf(dados.getString("uf"))
-                    .cidade(dados.getString("localidade"))
-                    .end(has ? logradouroComplemento.split("-")[0].trim() : logradouroComplemento)
-                    .complemento(has ? logradouroComplemento.split("-")[1].trim() : "")
-                    .bairro(dados.getString("bairro"))
-                    .cep(dados.getString("cep"))
-                    .build();
 
-            Optional<MuniciopioIbge> municiopioIbge = crawler.findMunicipioIbge(endereco.getUf(), endereco.getCidade());
-
-            if (municiopioIbge.isPresent()) {
-                endereco.setIbge(municiopioIbge.get().getCodigo());
-            } */
             return this.parseJsonToEnderecoCep(end);
         }
 
@@ -256,7 +253,6 @@ public class ProxyWebServiceCorreios {
 
         busca.append("&tipoCEP=ALL");
 
-        //Rua%20Felipe%20Schmidt&tipoCEP=ALL\""
         log.info("Realizando busca pelo crawler do correiros >>> " + busca.toString());
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -266,58 +262,28 @@ public class ProxyWebServiceCorreios {
                 .setHeader("accept-language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
                 .setHeader("cache-control", "no-store, no-cache, must-revalidate")
                 .setHeader("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
-                //.setHeader("cookie", "rxVisitor=1711682303310C7S7RSSKJE9N3NPBA66601MEG2LO8EUV; _gid=GA1.3.81951936.1712287006; dtCookie=v_4_srv_2_sn_HOJVH40PO0C1UOK96E4D0V20PPL6081V_app-3A47fca5cf7bd2003c_1_ol_0_perc_100000_mul_1; INGRESSCOOKIE=1712287042.436.28332.786103|a18ecd9549ddde51e3f47ee40455f85d; buscacep=ptbcd0t4lbl1mn659edpeb56pn; LBprdint2=1278869514.47873.0000; LBprdExt1=701038602.47873.0000; _ga=GA1.3.887944617.1711682292; rxvt=1712288881826|1712287006644; dtPC=2$487081736_790h-vMSFCUGCSDGACPDIWMMUUULCJCGTPLHLP-0e0; dtSa=true%7CC%7C-1%7CBusca%20CEP%20ou%20Endere%C3%A7o%7C-%7C1712287084863%7C487081736_790%7Chttps%3A%2F%2Fwww.correios.com.br%2F%7C%7C%7C%7C; _ga_J59GSF3WW5=GS1.1.1712287005.3.1.1712287084.57.0.0")
                 .setHeader("origin", "https://buscacepinter.correios.com.br")
                 .setHeader("referer", "https://buscacepinter.correios.com.br/app/endereco/index.php?t")
-                //.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"")
-                //.setHeader("sec-ch-ua-mobile", "?0")
-                //.setHeader("sec-ch-ua-platform", "\"macOS\"")
-                //.setHeader("sec-fetch-dest", "empty")
-                //.setHeader("sec-fetch-mode", "cors")
-                //.setHeader("sec-fetch-site", "same-origin")
-                //.setHeader("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
                 .build();
 
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             log.info("Resposta obtida pela busca por logradouro");
             log.info(response.body());
-            //System.out.println(response.body());
+
             result = new JsonObject(response.body());
 
             if (!result.getBoolean("erro")) {
                 var dados = result.getJsonArray("dados");
                 for (int i = 0; i < dados.size(); i++) {
                     var json = dados.getJsonObject(i);
-                    /* Optional<MuniciopioIbge> ibge =
-                        crawler.findMunicipioIbge(temp.getString("uf"), temp.getString("localidade"));
-                    if (ibge.isPresent()) {
-                        // temp.put("ibge", ibge.get().getCodigo());
-                        codigoCidadeIBGE = ibge.get().getCodigo();
-                    } else {
-                        codigoCidadeIBGE = null;
-                    }
-                    var logradouroComplemento = temp.getString("logradouroDNEC");
-                    var has  = logradouroComplemento.indexOf("-") > 0;
-                    endereco = EnderecoCep.builder()
-                            .uf(temp.getString("uf"))
-                            .cidade(temp.getString("localidade"))
-                            .end(has ? logradouroComplemento.split("-")[0].trim() : logradouroComplemento)
-                            .complemento(has ? logradouroComplemento.split("-")[1].trim() : "")
-                            .bairro(temp.getString("bairro"))
-                            .cep(temp.getString("cep"))
-                            .ibge(codigoCidadeIBGE)
-                            .build(); */
-
                     saida.add(this.parseJsonToEnderecoCep(json));
                 }
             } else {
                 log.error("nao obteve resposta do crawler");
             }
 
-        } catch (IOException e) {
-            throw new CorreiosServiceException(e.getMessage(), e);
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             throw new CorreiosServiceException(e.getMessage(), e);
         }
 
@@ -349,13 +315,60 @@ public class ProxyWebServiceCorreios {
                 .build();
     }
 
-    // TODO https://docs.awesomeapi.com.br/api-cep
+    private String removeNoDigitsFromCep(String cep) {
+        return cep.replaceAll("[^0-9]+","");
+    }
 
-//	public static void main(String[] args) {
-//		ProxyWebServiceCorreios m = new ProxyWebServiceCorreios();
-//		//System.out.println(m.crawlerWebSiteCorreios("88090352"));
-//        var s = m.buscaCepPorLogradouro("Rua Santa Rita de Cassia", "Florianopolis");
-//        s.forEach(System.out::println);
-//	}
+    public EnderecoCep callViaCep(String cep) {
+        cep = removeNoDigitsFromCep(cep);
+        HttpClient client = HttpClient.newHttpClient();
+        var url = format("https://viacep.com.br/ws/{0}/json/", cep);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            var json = new JsonObject(response.body());
 
+            return EnderecoCep.builder()
+                    .cep(cep)
+                    .uf(json.getString("uf"))
+                    .cidade(json.getString("localidade"))
+                    .bairro(json.getString("bairro"))
+                    .ibge(json.getString("ibge"))
+                    .end(json.getString("logradouro"))
+                    .complemento(json.getString("complemento"))
+                    .build();
+
+        } catch (Exception e) {
+            throw new CorreiosServiceException(format("Erro ao chamar a url {0} pela api ViaCep" , url));
+        }
+    }
+
+    public EnderecoCep callAwesomeApi(String cep) {
+        cep = removeNoDigitsFromCep(cep);
+        HttpClient client = HttpClient.newHttpClient();
+        var url = format("https://cep.awesomeapi.com.br/json/{0}", cep);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            var json = new JsonObject(response.body());
+
+            return EnderecoCep.builder()
+                    .cep(cep)
+                    .uf(json.getString("state"))
+                    .cidade(json.getString("city"))
+                    .bairro(json.getString("district"))
+                    .ibge(json.getString("city_ibge"))
+                    .end(json.getString("address"))
+                    .build();
+
+        } catch (Exception e) {
+            throw new CorreiosServiceException(format("Erro ao chamar a url {0} pela api AwesomeApi" , url));
+        }
+    }
 }

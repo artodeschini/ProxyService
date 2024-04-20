@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import static java.text.MessageFormat.format;
 
