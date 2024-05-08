@@ -30,10 +30,10 @@ mvn clean install
 docker build -t proxy-service .
 
 # executa a applicacao de iterativa
-docker run -it --rm --name proxy-teste -p 8080:8080 proxy-service
+docker run -it --rm --name proxy-service -p 8080:8080 proxy-service
 
 # executa como demon para vps
-docker run -d --rm --name proxy-teste -p 8080:8080 proxy-service
+docker run -d --rm --name proxy-service -p 8080:8080 proxy-service
 ```
 
 ## Notas da versao 2.0.4

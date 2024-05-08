@@ -1,29 +1,27 @@
 package org.todeschini.ibge;
 
+import io.quarkus.scheduler.Scheduled;
+import io.quarkus.scheduler.ScheduledExecution;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.todeschini.dto.MuniciopioIbge;
 import org.todeschini.dto.EstadoIbge;
 import org.todeschini.exception.IbgeCrawlerException;
-import org.todeschini.utils.HTTPS;
 import org.todeschini.utils.StringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Logger;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static java.text.MessageFormat.format;
 
@@ -35,34 +33,22 @@ public class IbgeCrawler {
 
     private Map<String, EstadoIbge> ESTATOS = new HashMap<>();
 
-    private static final String FILE_NAME_HTML_SAVE = "file-ibge-page-{0}.html";
+    private static final String FILE_NAME_HTML_SAVE = "./file-ibge-page-{0}.html";
 
     public String openPage() {
+        var client = HttpClient.newHttpClient();
+
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(URL_IBGE))
+                .GET()
+                .build();
         try {
-            HTTPS.k();
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new IbgeCrawlerException("erro ao ler dados da pagina do ibge desconsiderando https k", e);
-        }
-
-        var html = new StringBuilder();
-
-        try {
-            var url = new URL(URL_IBGE);
-            var connection = (HttpsURLConnection) url.openConnection();
-
-            var reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
-            String line = reader.readLine();
-
-            while (line != null) {
-                html.append(line);
-                line = reader.readLine();
-            }
-        } catch (IOException e) {
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.body();
+        } catch (Exception e) {
             log.error("erro ao ler os dados da pagina do ibge");
             throw new IbgeCrawlerException("erro ao ler dados da pagina do ibge ", e);
         }
-
-        return html.toString();
     }
 
     private void createArquivoIbge() {
@@ -75,7 +61,7 @@ public class IbgeCrawler {
     }
 
     private String getFileName() {
-        return System.getProperty("user.home").concat("/").concat(format(FILE_NAME_HTML_SAVE, LocalDate.now()));
+        return format(FILE_NAME_HTML_SAVE, LocalDate.now());
     }
 
     private void limparCache() {
@@ -241,13 +227,27 @@ public class IbgeCrawler {
         return estado;
     }
 
-//    public static void main(String[] args) {
-//        var ibge = new IbgeCrawler();
-//
-//        var municipio = ibge.findMunicipioIbge("SC", "São José");
-//        System.out.println(municipio.get().getNome());
-//        var poa = ibge.findMunicipioIbge("RS", "Porto Alegre");
-//        System.out.println(poa.get().getNome());
-//
-//    }
+    @Scheduled(cron="0 0 0/1 1/1 * ? *") // http://www.cronmaker.com/
+    void cronDeleteIbgeOldsFiles(ScheduledExecution execution) {
+        log.info("executnado ScheduledExecution deletando os arquivos ibge antigos");
+        this.removeOldFiles();
+    }
+
+    private void removeOldFiles() {
+        var yesterday = LocalDate.now().minusDays(1);
+        // pega os arquivo das raiz da app verifica se tem data menor que ontem e os deleta
+        Stream.of(Objects.requireNonNull(new File(".").listFiles()))
+                .filter(f -> !f.isDirectory())
+                .filter(f -> f.getName().contains(".html"))
+                .filter(f -> LocalDate.parse(
+                        f.getName().replaceAll("[^0-9]+",""),
+                        DateTimeFormatter.ofPattern("yyyyMMdd")).isBefore(yesterday))
+                .forEach(f -> {
+                    try {
+                        Files.deleteIfExists(f.toPath());
+                    } catch (IOException e) {
+                        log.info("Erro ao remover arquivos antigos");
+                    }
+                });
+    }
 }
